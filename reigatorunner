@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Rei Gato Runner</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    margin: auto;
+    background: linear-gradient(#87ceeb, #ffffff);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="game" width="900" height="400"></canvas>
+
+<!-- ÁUDIOS -->
+<audio id="meow">
+  <source src="https://www.myinstants.com/media/sounds/cat-meow.mp3">
+</audio>
+
+<audio id="music" loop>
+  <source src="https://cdn.pixabay.com/audio/2022/10/16/audio_8f5c6c2a2a.mp3">
+</audio>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+document.getElementById("music").volume = 0.4;
+document.getElementById("music").play();
+
+let speed = 6;
+let gravity = 0.8;
+let phase = 1;
+let frame = 0;
+
+// GATO
+const cat = {
+  x: 80,
+  y: 300,
+  w: 50,
+  h: 50,
+  vy: 0,
+  jumping: false
+};
+
+// OBSTÁCULO
+let obstacle = { x: 900, y: 320, w: 40, h: 40 };
+
+// NOVELO
+let yarn = { x: 1500, y: 300, r: 30 };
+
+// INPUT
+document.addEventListener("keydown", e => {
+  if ((e.key === "ArrowUp" || e.key === " ") && !cat.jumping) {
+    cat.vy = -15;
+    cat.jumping = true;
+    const meow = document.getElementById("meow");
+    meow.currentTime = 0;
+    meow.play();
+  }
+});
+
+function drawBackground() {
+  ctx.fillStyle = "#87ceeb";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#4caf50";
+  ctx.fillRect(0, 350, canvas.width, 50);
+
+  ctx.fillStyle = "rgba(0,0,0,0.15)";
+  ctx.font = "bold 60px Arial";
+  ctx.fillText("REI GATO 👑", 260, 120);
+}
+
+function drawCat() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(cat.x, cat.y, cat.w, cat.h);
+
+  // OLHOS
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(cat.x + 10, cat.y + 15, 8, 8);
+  ctx.fillRect(cat.x + 32, cat.y + 15, 8, 8);
+
+  // PERNAS (ANIMAÇÃO)
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 4;
+  if (!cat.jumping) {
+    let leg = frame % 20 < 10 ? 8 : -8;
+    ctx.beginPath();
+    ctx.moveTo(cat.x + 15, cat.y + 50);
+    ctx.lineTo(cat.x + 15 + leg, cat.y + 60);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cat.x + 35, cat.y + 50);
+    ctx.lineTo(cat.x + 35 - leg, cat.y + 60);
+    ctx.stroke();
+  }
+
+  // COROA
+  ctx.fillStyle = "gold";
+  ctx.beginPath();
+  ctx.moveTo(cat.x + 5, cat.y);
+  ctx.lineTo(cat.x + 15, cat.y - 15);
+  ctx.lineTo(cat.x + 25, cat.y);
+  ctx.lineTo(cat.x + 35, cat.y - 15);
+  ctx.lineTo(cat.x + 45, cat.y);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawObstacle() {
+  ctx.fillStyle = "#8b0000";
+  ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
+}
+
+function drawYarn() {
+  ctx.fillStyle = "pink";
+  ctx.beginPath();
+  ctx.arc(yarn.x, yarn.y, yarn.r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function update() {
+  frame++;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+
+  cat.vy += gravity;
+  cat.y += cat.vy;
+
+  if (cat.y >= 300) {
+    cat.y = 300;
+    cat.jumping = false;
+    cat.vy = 0;
+  }
+
+  obstacle.x -= speed;
+  if (obstacle.x + obstacle.w < 0) obstacle.x = 900 + Math.random() * 300;
+
+  yarn.x -= speed;
+  if (yarn.x + yarn.r < 0) yarn.x = 1500;
+
+  // COLISÃO
+  if (
+    cat.x < obstacle.x + obstacle.w &&
+    cat.x + cat.w > obstacle.x &&
+    cat.y < obstacle.y + obstacle.h &&
+    cat.y + cat.h > obstacle.y
+  ) {
+    alert("💀 GAME OVER | FASE " + phase);
+    location.reload();
+  }
+
+  let dx = cat.x - yarn.x;
+  let dy = cat.y - yarn.y;
+  if (Math.sqrt(dx * dx + dy * dy) < 50) {
+    phase++;
+    speed += 1.5;
+    yarn.x = 1500;
+  }
+
+  drawCat();
+  drawObstacle();
+  drawYarn();
+
+  ctx.fillStyle = "#000";
+  ctx.font = "20px Arial";
+  ctx.fillText("Fase: " + phase, 20, 30);
+
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+
+</body>
+</html>
